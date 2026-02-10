@@ -1,0 +1,5 @@
+{
+  "name": "Gestão-Almoxarifado",
+  "description": "A comprehensive web application for managing warehouse inventory, including suppliers, products, stock entries and exits, tool control, and cost reports by sector, vehicle, and machine.",
+  "requestFramePermissions": []
+}

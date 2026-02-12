@@ -4,7 +4,8 @@ import { Card } from './ui/Card';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
-import { Plus, Undo2, Loader2 } from 'lucide-react';
+import { Plus, Undo2, Loader2, Search } from 'lucide-react';
+import { Autocomplete, AutocompleteOption } from './ui/Autocomplete';
 import { DataTable, Column } from './common/DataTable';
 import { ActionButtons } from './common/ActionButtons';
 import { formatCurrency, formatDate, formatDateForInput } from '../utils/format';
@@ -241,12 +242,19 @@ export const StockExits: React.FC<StockExitsProps> = ({
       <Modal isOpen={isExitModalOpen} onClose={() => !isSubmitting && setIsExitModalOpen(false)} title="Registrar Saída de Material">
         <form onSubmit={handleExitSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium">Produto</label>
-              <select name="productId" value={exitFormState.productId} onChange={handleExitFormChange} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-white" required>
-                <option value="">Selecione...</option>
-                {products.map(p => <option key={p.id} value={p.id}>{p.description} (Saldo: {getStockLevel(p.id)})</option>)}
-              </select>
+            <div className="md:col-span-2">
+              <Autocomplete
+                label="Produto"
+                options={products.map(p => ({
+                  id: p.id,
+                  label: p.description,
+                  subLabel: `Saldo: ${getStockLevel(p.id)}`
+                }))}
+                value={exitFormState.productId}
+                onChange={(val) => setExitFormState(prev => ({ ...prev, productId: val }))}
+                placeholder="Busque por um produto..."
+                required
+              />
             </div>
             <div>
               <label className="block text-sm font-medium">Quantidade</label>

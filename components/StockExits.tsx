@@ -8,7 +8,7 @@ import { Plus, Undo2, Loader2, Search } from 'lucide-react';
 import { Autocomplete, AutocompleteOption } from './ui/Autocomplete';
 import { DataTable, Column } from './common/DataTable';
 import { ActionButtons } from './common/ActionButtons';
-import { formatCurrency, formatDate, formatDateForInput } from '../utils/format';
+import { formatCurrency, formatDate, formatDateForInput, parseLocalDate } from '../utils/format';
 import { calculateAverageValue, calculateTotalValue } from '../utils/calculations';
 
 interface StockExitsProps {
@@ -83,7 +83,7 @@ export const StockExits: React.FC<StockExitsProps> = ({
 
     setExitFormState(prev => ({
       ...prev,
-      [name]: type === 'date' ? new Date(value) : value,
+      [name]: type === 'date' ? parseLocalDate(value) : value,
     }));
   };
 

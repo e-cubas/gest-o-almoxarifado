@@ -7,7 +7,7 @@ import { Modal } from './ui/Modal';
 import { Plus, Loader2 } from 'lucide-react';
 import { DataTable, Column } from './common/DataTable';
 import { ActionButtons } from './common/ActionButtons';
-import { formatCurrency, formatDate, formatDateForInput } from '../utils/format';
+import { formatCurrency, formatDate, formatDateForInput, parseLocalDate } from '../utils/format';
 import { calculateTotalValue } from '../utils/calculations';
 
 interface StockEntriesProps {
@@ -75,7 +75,7 @@ export const StockEntries: React.FC<StockEntriesProps> = ({
     const { name, value, type } = e.target;
     setFormState(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : type === 'date' ? new Date(value) : value,
+      [name]: type === 'number' ? parseFloat(value) || 0 : type === 'date' ? parseLocalDate(value) : value,
     }));
   };
 

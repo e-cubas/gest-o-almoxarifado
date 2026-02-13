@@ -114,8 +114,11 @@ export const StockExits: React.FC<StockExitsProps> = ({
       return;
     }
     const currentStock = getStockLevel(exitFormState.productId);
-    if (quantityNum > currentStock) {
-      alert(`Saldo insuficiente. Saldo atual: ${currentStock}`);
+    const originalQuantity = editingExit ? editingExit.quantity : 0;
+    const availableStock = currentStock + originalQuantity;
+
+    if (quantityNum > availableStock) {
+      alert(`Saldo insuficiente. Saldo disponível para ajuste: ${availableStock}`);
       return;
     }
 

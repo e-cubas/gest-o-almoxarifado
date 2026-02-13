@@ -30,6 +30,7 @@ export const MovementView: React.FC<MovementViewProps> = ({ data }) => {
                     exits={data.exits}
                     entries={data.entries}
                     addExit={data.addExit}
+                    updateExit={data.updateExit}
                     deleteExit={data.deleteExit}
                     returnExit={data.returnItemsFromExit}
                     getStockLevel={data.getStockLevel}

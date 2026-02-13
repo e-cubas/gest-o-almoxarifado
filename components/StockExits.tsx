@@ -16,6 +16,7 @@ interface StockExitsProps {
   exits: StockExit[];
   entries: StockEntry[];
   addExit: (exit: Omit<StockExit, 'id'>) => Promise<StockExit | undefined>;
+  updateExit: (exit: StockExit) => Promise<void>;
   deleteExit: (id: string) => Promise<void>;
   returnExit: (exit: StockExit, quantity: number, observation: string) => Promise<void>;
   getStockLevel: (productId: string) => number;
@@ -41,18 +42,35 @@ export const StockExits: React.FC<StockExitsProps> = ({
   exits,
   entries,
   addExit,
+  updateExit,
   deleteExit,
   returnExit,
   getStockLevel,
   loading: dataLoading
 }) => {
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [editingExit, setEditingExit] = useState<StockExit | null>(null);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [selectedExit, setSelectedExit] = useState<StockExit | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [exitFormState, setExitFormState] = useState(initialExitFormState);
   const [returnFormState, setReturnFormState] = useState(initialReturnFormState);
+
+  React.useEffect(() => {
+    if (editingExit) {
+      setExitFormState({
+        date: editingExit.date,
+        productId: editingExit.productId,
+        quantity: editingExit.quantity.toString().replace('.', ','),
+        destination: editingExit.destination,
+        withdrawnBy: editingExit.withdrawnBy,
+        user: editingExit.user,
+      });
+    } else {
+      setExitFormState(initialExitFormState);
+    }
+  }, [editingExit]);
 
   const getProductName = (id: string) => products.find(p => p.id === id)?.description || 'N/A';
 
@@ -103,19 +121,37 @@ export const StockExits: React.FC<StockExitsProps> = ({
 
     setIsSubmitting(true);
     try {
-      await addExit({
-        ...exitFormState,
-        quantity: quantityNum
-      });
-      setExitFormState(initialExitFormState);
-      setIsExitModalOpen(false);
+      if (editingExit) {
+        await updateExit({
+          ...editingExit,
+          ...exitFormState,
+          quantity: quantityNum,
+        });
+      } else {
+        await addExit({
+          ...exitFormState,
+          quantity: quantityNum
+        });
+      }
+      handleCloseExitModal();
     } catch (error) {
       console.error('Exit error:', error);
-      alert('Erro ao registrar saída.');
+      alert('Erro ao salvar saída.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleOpenExitModal = (exit: StockExit | null = null) => {
+    setEditingExit(exit);
+    setIsExitModalOpen(true);
+  };
+
+  const handleCloseExitModal = () => {
+    if (isSubmitting) return;
+    setIsExitModalOpen(false);
+    setEditingExit(null);
+  }
 
   const handleOpenReturnModal = (exit: (typeof exitsWithReturnData)[0]) => {
     setSelectedExit(exit);
@@ -211,6 +247,7 @@ export const StockExits: React.FC<StockExitsProps> = ({
       align: 'right',
       render: (exit) => (
         <ActionButtons
+          onEdit={() => handleOpenExitModal(exit)}
           onDelete={() => handleDelete(exit.id)}
           customActions={
             !exit.isFullyReturned ? (
@@ -239,7 +276,7 @@ export const StockExits: React.FC<StockExitsProps> = ({
 
   return (
     <>
-      <Modal isOpen={isExitModalOpen} onClose={() => !isSubmitting && setIsExitModalOpen(false)} title="Registrar Saída de Material">
+      <Modal isOpen={isExitModalOpen} onClose={handleCloseExitModal} title={editingExit ? "Editar Saída de Material" : "Registrar Saída de Material"}>
         <form onSubmit={handleExitSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -274,9 +311,9 @@ export const StockExits: React.FC<StockExitsProps> = ({
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="secondary" onClick={() => setIsExitModalOpen(false)} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="button" variant="secondary" onClick={handleCloseExitModal} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <><Loader2 size={16} className="mr-2 animate-spin" /> Salvando...</> : 'Registrar Saída'}
+              {isSubmitting ? <><Loader2 size={16} className="mr-2 animate-spin" /> Salvando...</> : editingExit ? 'Atualizar Saída' : 'Registrar Saída'}
             </Button>
           </div>
         </form>
@@ -329,7 +366,7 @@ export const StockExits: React.FC<StockExitsProps> = ({
       <Card>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Histórico de Saídas</h3>
-          <Button onClick={() => setIsExitModalOpen(true)} disabled={dataLoading}>
+          <Button onClick={() => handleOpenExitModal()} disabled={dataLoading}>
             <Plus size={16} className="mr-2" /> Registrar Saída
           </Button>
         </div>

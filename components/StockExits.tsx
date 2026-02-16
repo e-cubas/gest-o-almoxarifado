@@ -53,6 +53,7 @@ export const StockExits: React.FC<StockExitsProps> = ({
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [selectedExit, setSelectedExit] = useState<StockExit | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [exitFormState, setExitFormState] = useState(initialExitFormState);
   const [returnFormState, setReturnFormState] = useState(initialReturnFormState);
@@ -272,10 +273,22 @@ export const StockExits: React.FC<StockExitsProps> = ({
     },
   ], [entries, products]);
 
-  // Sort exits by date descending
-  const sortedExits = useMemo(() => {
-    return [...exitsWithReturnData].sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [exitsWithReturnData]);
+  // Filter and Sort exits
+  const processedExits = useMemo(() => {
+    let filtered = [...exitsWithReturnData];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(exit => {
+        const product = getProductName(exit.productId).toLowerCase();
+        const destination = exit.destination.toLowerCase();
+        const withdrawnBy = exit.withdrawnBy.toLowerCase();
+        return product.includes(term) || destination.includes(term) || withdrawnBy.includes(term);
+      });
+    }
+
+    return filtered.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [exitsWithReturnData, searchTerm, products]);
 
   return (
     <>
@@ -367,11 +380,23 @@ export const StockExits: React.FC<StockExitsProps> = ({
       )}
 
       <Card>
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Histórico de Saídas</h3>
-          <Button onClick={() => handleOpenExitModal()} disabled={dataLoading}>
-            <Plus size={16} className="mr-2" /> Registrar Saída
-          </Button>
+          <div className="flex flex-col md:flex-row w-full md:w-auto gap-3">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Input
+                type="text"
+                placeholder="Buscar saída..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button onClick={() => handleOpenExitModal()} disabled={dataLoading}>
+              <Plus size={16} className="mr-2" /> Registrar Saída
+            </Button>
+          </div>
         </div>
 
         {dataLoading ? (
@@ -380,7 +405,7 @@ export const StockExits: React.FC<StockExitsProps> = ({
           </div>
         ) : (
           <DataTable
-            data={sortedExits}
+            data={processedExits}
             columns={columns}
             keyExtractor={(exit) => exit.id}
             rowClassName={(exit) => exit.isFullyReturned ? 'opacity-60' : ''}

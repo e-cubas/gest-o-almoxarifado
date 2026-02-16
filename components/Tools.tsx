@@ -4,7 +4,7 @@ import { Card } from './ui/Card';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
-import { Plus, ArrowUpRightFromSquare, CornerDownLeft, Loader2 } from 'lucide-react';
+import { Plus, ArrowUpRightFromSquare, CornerDownLeft, Loader2, Search } from 'lucide-react';
 import { DataTable, Column } from './common/DataTable';
 import { ActionButtons } from './common/ActionButtons';
 import { formatDate } from '../utils/format';
@@ -41,6 +41,7 @@ export const Tools: React.FC<ToolsProps> = (props) => {
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // State for selected tool and forms
     const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
@@ -207,6 +208,21 @@ export const Tools: React.FC<ToolsProps> = (props) => {
         }
     ], [toolCheckouts, getCheckedOutCount, loadingTools, loadingCheckouts]);
 
+    // Filter tools
+    const filteredTools = useMemo(() => {
+        if (!searchTerm) return tools;
+
+        const term = searchTerm.toLowerCase();
+        return tools.filter(tool => {
+            const description = tool.description.toLowerCase();
+            const hasResponsibleMatch = toolCheckouts
+                .filter(c => c.toolId === tool.id)
+                .some(c => c.responsible.toLowerCase().includes(term));
+
+            return description.includes(term) || hasResponsibleMatch;
+        });
+    }, [tools, searchTerm, toolCheckouts]);
+
     return (
         <div className="space-y-6">
             {/* Add/Edit Modal */}
@@ -276,11 +292,23 @@ export const Tools: React.FC<ToolsProps> = (props) => {
             )}
 
             <Card>
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Controle de Ferramentas</h3>
-                    <Button onClick={() => openAddEditModal()} disabled={loadingTools || loadingCheckouts}>
-                        <Plus size={16} className="mr-2" /> Adicionar Ferramenta
-                    </Button>
+                    <div className="flex flex-col md:flex-row w-full md:w-auto gap-3">
+                        <div className="relative w-full md:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <Input
+                                type="text"
+                                placeholder="Buscar ferramenta..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                        <Button onClick={() => openAddEditModal()} disabled={loadingTools || loadingCheckouts}>
+                            <Plus size={16} className="mr-2" /> Adicionar Ferramenta
+                        </Button>
+                    </div>
                 </div>
 
                 {loadingTools || loadingCheckouts ? (
@@ -289,7 +317,7 @@ export const Tools: React.FC<ToolsProps> = (props) => {
                     </div>
                 ) : (
                     <DataTable
-                        data={tools}
+                        data={filteredTools}
                         columns={columns}
                         keyExtractor={(tool) => tool.id}
                     />

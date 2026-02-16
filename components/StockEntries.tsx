@@ -23,7 +23,7 @@ interface StockEntriesProps {
 const initialFormState = {
   date: new Date(),
   productId: '',
-  quantity: 0,
+  quantity: '',
   unitValue: 0,
   supplierId: '',
   user: 'Admin', // Hardcoded for now
@@ -49,7 +49,7 @@ export const StockEntries: React.FC<StockEntriesProps> = ({
       setFormState({
         date: editingEntry.date,
         productId: editingEntry.productId,
-        quantity: editingEntry.quantity,
+        quantity: editingEntry.quantity.toString().replace('.', ','),
         unitValue: editingEntry.unitValue,
         supplierId: editingEntry.supplierId,
         user: editingEntry.user,
@@ -73,6 +73,14 @@ export const StockEntries: React.FC<StockEntriesProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+
+    if (name === 'quantity') {
+      if (/^[\d,.]*$/.test(value)) {
+        setFormState(prev => ({ ...prev, [name]: value }));
+      }
+      return;
+    }
+
     setFormState(prev => ({
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : type === 'date' ? parseLocalDate(value) : value,
@@ -81,17 +89,24 @@ export const StockEntries: React.FC<StockEntriesProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formState.productId || !formState.supplierId || formState.quantity <= 0) {
-      alert('Produto, Fornecedor e Quantidade são obrigatórios.');
+    const quantityNum = parseFloat(formState.quantity.toString().replace(',', '.'));
+
+    if (!formState.productId || !formState.supplierId || isNaN(quantityNum) || quantityNum <= 0) {
+      alert('Produto, Fornecedor e Quantidade são obrigatórios e a quantidade deve ser maior que zero.');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const dataToSubmit = {
+        ...formState,
+        quantity: quantityNum,
+      };
+
       if (editingEntry) {
-        await updateEntry({ ...editingEntry, ...formState });
+        await updateEntry({ ...editingEntry, ...dataToSubmit });
       } else {
-        await addEntry(formState);
+        await addEntry(dataToSubmit);
       }
       handleCloseModal();
     } catch (error) {
@@ -186,7 +201,7 @@ export const StockEntries: React.FC<StockEntriesProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium">Quantidade</label>
-              <Input name="quantity" type="number" min="0" value={formState.quantity} onChange={handleChange} required />
+              <Input name="quantity" type="text" inputMode="decimal" placeholder="0,00" value={formState.quantity} onChange={handleChange} required />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium">Valor Unitário</label>

@@ -230,9 +230,9 @@ export const StockExits: React.FC<StockExitsProps> = ({
       ),
     },
     {
-      header: 'Valor Médio',
+      header: 'Valor Unitário',
       render: (exit) => {
-        const averageValue = calculateAverageValue(entries, exit.productId);
+        const averageValue = exit.unitValue;
         const totalValue = calculateTotalValue(exit.effectiveQuantity, averageValue);
         return (
           <div className="text-slate-800 dark:text-slate-300">

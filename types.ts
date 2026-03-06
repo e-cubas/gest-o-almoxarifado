@@ -34,6 +34,7 @@ export interface StockExit {
   date: Date;
   productId: string;
   quantity: number;
+  unitValue: number;
   destination: string; // e.g., 'Administração', 'Caminhão-01', 'Retroescavadeira-A'
   withdrawnBy: string; // Name of the person who took the item
   user: string;

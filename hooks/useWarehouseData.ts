@@ -121,6 +121,7 @@ export const useWarehouseData = () => {
           date: parseLocalDate(item.date),
           productId: item.product_id,
           quantity: Number(item.quantity),
+          unitValue: Number(item.unit_value || 0),
           destination: item.destination,
           withdrawnBy: item.withdrawn_by,
           user: item.user_name,
@@ -414,14 +415,16 @@ export const useWarehouseData = () => {
   };
 
   // Exit Actions
-  const addExit = async (exit: Omit<StockExit, 'id'>) => {
+  const addExit = async (exit: Omit<StockExit, 'id' | 'unitValue'>) => {
     try {
+      const unitValue = calculateAverageValue(entries, exit.productId);
       const { data, error } = await supabase
         .from('stock_exits')
         .insert([{
           date: formatDateForInput(exit.date),
           product_id: exit.productId,
           quantity: exit.quantity,
+          unit_value: unitValue,
           destination: exit.destination,
           withdrawn_by: exit.withdrawnBy,
           user_name: exit.user,
@@ -437,6 +440,7 @@ export const useWarehouseData = () => {
           date: parseLocalDate(data.date),
           productId: data.product_id,
           quantity: Number(data.quantity),
+          unitValue: Number(data.unit_value),
           destination: data.destination,
           withdrawnBy: data.withdrawn_by,
           user: data.user_name,
@@ -457,6 +461,7 @@ export const useWarehouseData = () => {
           date: formatDateForInput(updatedExit.date),
           product_id: updatedExit.productId,
           quantity: updatedExit.quantity,
+          unit_value: updatedExit.unitValue,
           destination: updatedExit.destination,
           withdrawn_by: updatedExit.withdrawnBy,
           user_name: updatedExit.user,
@@ -493,11 +498,8 @@ export const useWarehouseData = () => {
       return;
     }
 
-    // Calculate historical average value at the time of exit
-    const historicalValue = calculateAverageValue(entries, exit.productId, exit.date);
-
-    // Falls back to product unitCost if no entries were found before that date (or if average is 0)
-    const unitValue = historicalValue > 0 ? historicalValue : product.unitCost;
+    // Use the unit value stored at the time of exit
+    const unitValue = exit.unitValue || product.unitCost;
 
     await addEntry({
       date: new Date(),

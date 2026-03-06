@@ -7,8 +7,13 @@ import type { StockEntry } from '../types';
  * @param productId The ID of the product to calculate.
  * @returns The weighted average value, or 0 if no entries exist.
  */
-export const calculateAverageValue = (entries: StockEntry[], productId: string): number => {
-    const productEntries = entries.filter(e => e.productId === productId);
+export const calculateAverageValue = (entries: StockEntry[], productId: string, beforeDate?: Date): number => {
+    let productEntries = entries.filter(e => e.productId === productId);
+
+    if (beforeDate) {
+        productEntries = productEntries.filter(e => e.date <= beforeDate);
+    }
+
     if (productEntries.length === 0) return 0;
 
     const totalValue = productEntries.reduce((sum, e) => sum + (e.quantity * e.unitValue), 0);

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Supplier, Product, StockEntry, StockExit, Tool, ToolCheckout } from '../types';
 import { formatDateForInput, parseLocalDate } from '../utils/format';
+import { calculateAverageValue } from '../utils/calculations';
 
 export const useWarehouseData = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -492,11 +493,17 @@ export const useWarehouseData = () => {
       return;
     }
 
+    // Calculate historical average value at the time of exit
+    const historicalValue = calculateAverageValue(entries, exit.productId, exit.date);
+
+    // Falls back to product unitCost if no entries were found before that date (or if average is 0)
+    const unitValue = historicalValue > 0 ? historicalValue : product.unitCost;
+
     await addEntry({
       date: new Date(),
       productId: exit.productId,
       quantity,
-      unitValue: product.unitCost,
+      unitValue,
       supplierId: 'DEVOLUCAO',
       user: 'Sistema',
       observations: `Devolução da Saída ${exit.id}. ${observation}`,

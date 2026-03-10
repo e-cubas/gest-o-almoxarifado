@@ -417,7 +417,10 @@ export const useWarehouseData = () => {
   // Exit Actions
   const addExit = async (exit: Omit<StockExit, 'id' | 'unitValue'>) => {
     try {
-      const unitValue = calculateAverageValue(entries, exit.productId);
+      const averageValue = calculateAverageValue(entries, exit.productId);
+      const product = products.find(p => p.id === exit.productId);
+      const unitValue = averageValue > 0 ? averageValue : (product?.unitCost || 0);
+
       const { data, error } = await supabase
         .from('stock_exits')
         .insert([{

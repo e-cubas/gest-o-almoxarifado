@@ -232,11 +232,12 @@ export const StockExits: React.FC<StockExitsProps> = ({
     {
       header: 'Valor Unitário',
       render: (exit) => {
-        const averageValue = exit.unitValue;
-        const totalValue = calculateTotalValue(exit.effectiveQuantity, averageValue);
+        const product = products.find(p => p.id === exit.productId);
+        const displayUnitValue = exit.unitValue > 0 ? exit.unitValue : (product?.unitCost || 0);
+        const totalValue = calculateTotalValue(exit.effectiveQuantity, displayUnitValue);
         return (
           <div className="text-slate-800 dark:text-slate-300">
-            <div className="font-semibold">{formatCurrency(averageValue)}</div>
+            <div className="font-semibold">{formatCurrency(displayUnitValue)}</div>
             <div className="text-xs text-slate-500 font-normal">Total: {formatCurrency(totalValue)}</div>
           </div>
         );
